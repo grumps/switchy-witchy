@@ -1,6 +1,6 @@
 import unittest
 import datetime
-from models import Message
+from .models import Message
 
 
 class MessageTestCase(unittest.TestCase):

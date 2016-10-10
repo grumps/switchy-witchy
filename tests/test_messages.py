@@ -1,6 +1,6 @@
 import unittest
 import datetime
-from .models import Message
+from messages.models import Message
 
 
 class MessageTestCase(unittest.TestCase):
@@ -20,7 +20,7 @@ class MessageTestCase(unittest.TestCase):
         message = self.message(**self.DATA)
         self.assertIsInstance(message.create_timestamp(), datetime.datetime)
 
-    def test_assert_is_raiseed(self):
+    def test_assert_is_raised(self):
         """if either sender or data is not set, an AssertionError is raised"""
         data = {'data': 'ddd'}
         data2 = {'sender': 'stuff'}
@@ -30,8 +30,9 @@ class MessageTestCase(unittest.TestCase):
 
     def test_is_valid_set_initial(self):
         """is_valid sets initial"""
+        message = self.message(**self.DATA)
+        # we don't want to compare timestamps
+        message._initial.pop('create_timestamp') 
         self.assertDictEqual(self.DATA,
-                             self.message(**self.DATA)._initial)
+                             message._initial)
 
-if __name__ == '__main__':
-    unittest.main()

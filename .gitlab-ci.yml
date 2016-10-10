@@ -1,4 +1,4 @@
-image: python:lastest
+image: python:latest
 test:
   script:
   - apt-get update -qy

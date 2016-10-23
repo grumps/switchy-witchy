@@ -1,5 +1,3 @@
-__author__ = 'Maxwell J. Resnick'
-__docformat__ = 'reStructuredText'
 import json
 import datetime
 from typing import Dict
@@ -38,7 +36,6 @@ class BaseMessage:
         :rtype: object
         """
         return datetime.datetime.utcnow().isoformat()
-
 
     def encode(self) -> str:
         """JSON encodes .initial

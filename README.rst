@@ -2,10 +2,8 @@
 switchy-witchy
 ===============================
 
-.. image:: https://img.shields.io/pypi/v/switchy-witchy.svg
-        :target: https://pypi.python.org/pypi/switchy-witchy
 
-.. image:: https://img.shields.io/travis/grumps/switchy-witchy.svg
+.. image:: https://gitlab.com/grumps/switchy-witchy/badges/master/build.svg 
         :target: https://travis-ci.org/grumps/switchy-witchy
 
 .. image:: https://readthedocs.org/projects/switchy-witchy/badge/?version=latest

@@ -1,6 +1,5 @@
 import json
 import datetime
-from typing import Dict
 
 
 class BaseMessage:
@@ -14,11 +13,11 @@ class BaseMessage:
     
     _initial = {}  # type: Dict[str, str]
     
-    def __init__(self, data: str = None, sender: str = None) -> None:
+    def __init__(self, data=None, sender=None):
         self.is_valid(data, sender)
         self._initial.update({'create_timestamp': self.create_timestamp()})
 
-    def is_valid(self, data: str = None, sender: str = None) -> bool:
+    def is_valid(self, data=None, sender=None):
         """checks for a valid message, sets .initial
         :returns: boolean
         :rtype: bool
@@ -30,14 +29,14 @@ class BaseMessage:
         self.data = data
         return True
 
-    def create_timestamp(self) -> str:
+    def create_timestamp(self):
         """creation timestamp, utc
         :return: datetime.datetime.utcnow()
         :rtype: object
         """
         return datetime.datetime.utcnow().isoformat()
 
-    def encode(self) -> str:
+    def encode(self):
         """JSON encodes .initial
         :returns: json.dump
         :rtype: bytes

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
-from collections import namedtuple
 
+"""Traps capture varying events within the system"""
 import psutil
 
 
-class Trap:
+class Trap(object):
     """
-    An alarm or trigger, to be tripped by a process. 
+    An alarm or trigger, to be tripped by a process.
     """
 
     def __init__(self, properties):
         self.process = Proc.create_watch(properties)
 
 
-class MemoryTrap:
+class MemoryTrap(object):
 
     def max_memory(self):
         """
@@ -22,7 +22,7 @@ class MemoryTrap:
         pass
 
 
-class CpuTrap:
+class CpuTrap(object):
 
     def max_cpu_usage(self):
         """
@@ -38,16 +38,16 @@ class Proc(psutil.Process):
 
     @classmethod
     def _parent_walk(cls, current_proc):
-        """                                                                     
-        recursive function to return the top parential proc                     
-        NOTE: currently we are basing only on name of the process               
-        as such it may present issues with properly id' the parent              
-        possible solution - look at os module, or possible systemd              
-        but could get ugly with various systems. e.g. chrome,                   
-        chrome-sandbox                                                          
-        :param current_proc :class:`psutil.Process`: Process instance Process instance 
-        :return Proc.id: Process Id                                             
-        :rtype int:                                                             
+        """
+        recursive function to return the top parential proc
+        NOTE: currently we are basing only on name of the process
+        as such it may present issues with properly id' the parent
+        possible solution - look at os module, or possible systemd
+        but could get ugly with various systems. e.g. chrome,
+        chrome-sandbox
+        :param current_proc :class:`psutil.Process`: Process instance Process instance
+        :return Proc.id: Process Id
+        :rtype int:
         """
         parent = current_proc.parent()
         try:
@@ -60,12 +60,12 @@ class Proc(psutil.Process):
         return cls._parent_walk(current_proc.parent())
 
     @classmethod
-    def _is_match(self, proc, properties):
+    def _is_match(cls, proc, properties):
         """
         True if all configured process properties match a process.
-        we are checking if all fields provided     
-        match, the current proc.                   
-        access each object's attr, via a 'string'  
+        we are checking if all fields provided
+        match, the current proc.
+        access each object's attr, via a 'string'
         :param proc: the actual process, `psutil.Process`
         :return bool:
         :rtype bool:

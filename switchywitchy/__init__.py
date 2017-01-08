@@ -4,7 +4,7 @@ __author__ = 'Maxwell J. Resnick'
 __email__ = 'max@ofmax.li'
 __version__ = '0.1.0'
 
-from .app import SwitchyWitchy
+from .switchywitchy import SwitchyWitchy
 
-from traps import models
-from messages import models
+from . import traps
+from . import messages

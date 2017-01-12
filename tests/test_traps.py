@@ -27,14 +27,14 @@ class ProcTestCase(unittest.TestCase):
                             "parent": 0,
                             "pid": 55},]
 
-    def test_should_find_a_proc_base_case(self, ):
+    def test_returns_a_proc_without_parent(self):
         """If there's no parent, it should return the initial proc"""
         self.test_props[1]["parent"] = self.create_mock(self.test_props[0])
         mock_proc = self.create_mock(self.test_props[1])
         proc_id = Proc._parent_walk(mock_proc)
         self.assertEqual(55, proc_id())
 
-    def test_parent_walk(self):
+    def test_returns_a_procs_parent(self):
         """if the process has a parent, it should return the parent"""
         self.test_props.append(dict(self.test_props[1]))
         self.test_props[2]["pid"] = 54
@@ -43,3 +43,7 @@ class ProcTestCase(unittest.TestCase):
         mock_proc = self.create_mock(self.test_props[2])
         proc = Proc._parent_walk(mock_proc)
         self.assertEqual(55, proc())
+    
+    def test_create_watch_returns_a_proc_class(self):
+        """create_watch returns an instance of a process"""
+        self.assertIsInstance(Proc.create_watch({"name": "python"}), Proc)

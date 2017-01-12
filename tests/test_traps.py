@@ -1,39 +1,45 @@
+"""tests for traps package"""
+
 import unittest
 import unittest.mock as mock
-import datetime
-from collections import namedtuple
-from traps.models import Proc
+from switchywitchy.traps.models import Proc
 
 
 class ProcTestCase(unittest.TestCase):
     """tests for traps"""
 
-    @mock.patch('psutil.Process', autopect=True)
-    @mock.patch('psutil.Process', autopect=True)
-    def setUpMocks(self, mock_proc, mock_proc_2):
-        base_name = 'mock_proc_%s'
-        for index, item in enumerate(self.test_props):
-            base_name = "mock_proc_%s" % (index)
-            self.base_name = mock.create_autospec("psutil.Process")
-            self.base_name.key = mock.MagicMock(return_value=value)
-            self.base_name.parent = mock.MagicMock(return_value=item["parent"])
-            self.base_name.pid = mock.MagicMock(return_value=index)
+    @mock.patch("psutil.Process", autospec=True)
+    def create_mock(self, properties, mocked):
+        """sets up mocks for tests"""
+        for key, value in properties.items():
+            setattr(mocked,
+                    key,
+                    mock.MagicMock(return_value=value))
+        return mocked
 
-    def setUp(self, *args, **kwargs):
+    def setUp(self):
         print(self.shortDescription())
-        self.test_props = [{"name": "eee",
-                            "parent": None},
+        self.mocks = []
+        self.test_props = [{"name": "e2ee",
+                            "parent": None,
+                            "pid": 44},
                            {"name": "eee",
-                            "parent": 0},]
+                            "parent": 0,
+                            "pid": 55},]
 
-    def test_should_find_a_proc_base_case(self):
-        """should find a process with a name `xyz` no parent"""
-        proc_id = Proc._parent_walk(self.mock_proc)
+    def test_should_find_a_proc_base_case(self, ):
+        """If there's no parent, it should return the initial proc"""
+        self.test_props[1]["parent"] = self.create_mock(self.test_props[0])
+        mock_proc = self.create_mock(self.test_props[1])
+        proc_id = Proc._parent_walk(mock_proc)
         self.assertEqual(55, proc_id())
 
     def test_parent_walk(self):
-        """test_base_case"""
-        self.mock_proc = mock.MagicMock(return_value=self.mock_proc_2)
-        self.mock_proc_2.name = mock.MagicMock(return_value="eee")
-        proc = Proc._parent_walk(self.mock_proc)
-        self.assertEqual(self.test_prop['name'], proc.name())
+        """if the process has a parent, it should return the parent"""
+        self.test_props.append(dict(self.test_props[1]))
+        self.test_props[2]["pid"] = 54
+        self.test_props[1]["parent"] = self.create_mock(self.test_props[0])
+        self.test_props[2]["parent"] = self.create_mock(self.test_props[1])
+        mock_proc = self.create_mock(self.test_props[2])
+        proc = Proc._parent_walk(mock_proc)
+        self.assertEqual(55, proc())

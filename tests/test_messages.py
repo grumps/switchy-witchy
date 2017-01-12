@@ -1,6 +1,6 @@
 import unittest
 import datetime
-from messages.models import BaseMessage
+from switchywitchy.messages.models import BaseMessage
 
 
 class MessageTestCase(unittest.TestCase):
@@ -41,4 +41,3 @@ class MessageTestCase(unittest.TestCase):
                 self.DATA['sender'])
         self.assertEqual(message.data,
                 self.DATA['data'])
-        

@@ -56,7 +56,7 @@ class Proc(psutil.Process):
         except AttributeError:
             # We've traveresed all the way to PID 1,
             # `process.parent()` returns None
-            return None
+            return current_proc.pid
         return cls._parent_walk(current_proc.parent())
 
     @classmethod

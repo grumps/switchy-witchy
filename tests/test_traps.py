@@ -46,4 +46,6 @@ class ProcTestCase(unittest.TestCase):
     
     def test_create_watch_returns_a_proc_class(self):
         """create_watch returns an instance of a process"""
+        p = Proc()
+        print(p.name())
         self.assertIsInstance(Proc.create_watch({"name": "python"}), Proc)

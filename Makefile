@@ -8,7 +8,7 @@ except:
 
 webbrowser.open("file://" + pathname2url(os.path.abspath(sys.argv[1])))
 endef
-export BROWSER_PYSCRIPT
+export BROWSER_PYSCRIPT="chromium"
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 help:
@@ -46,7 +46,7 @@ clean-test:
 	rm -fr htmlcov/
 
 lint:
-	flake8 switchy-witchy tests
+	flake8 switchywitchy tests
 
 test:
 	python setup.py test
@@ -55,15 +55,15 @@ test-all:
 	tox
 
 coverage:
-	coverage run --source switchy-witchy setup.py test
+	coverage run --source switchywitchy setup.py test
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
 docs:
-	rm -f docs/switchy-witchy.rst
+	rm -f docs/switchywitchy.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ switchy-witchy
+	sphinx-apidoc -o docs/ switchywitchy
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html

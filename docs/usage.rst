@@ -2,6 +2,6 @@
 Usage
 ========
 
-To use switchy-witchy in a project::
+To use switchywitchy in a project::
 
-    import switchy-witchy
+    import switchywitchy

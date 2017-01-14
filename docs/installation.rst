@@ -4,9 +4,9 @@ Installation
 
 At the command line::
 
-    $ easy_install switchy-witchy
+    $ easy_install switchywitchy
 
 Or, if you have virtualenvwrapper installed::
 
-    $ mkvirtualenv switchy-witchy
-    $ pip install switchy-witchy
+    $ mkvirtualenv switchywitchy
+    $ pip install switchywitchy

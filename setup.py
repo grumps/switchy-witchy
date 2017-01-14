@@ -33,23 +33,23 @@ test_requirements = [str(tr.req) for tr in parsed_test_requirements]
 
 
 setup(
-    name='switchy-witchy',
+    name='switchywitchy',
     version='0.1.0',
     description="A simple tcp message util for capturing sys info.",
     long_description=readme + '\n\n' + history,
     author="Maxwell J. Resnick",
     author_email='max@ofmax.li',
-    url='https://gitlab.com/grumps/switchy-witchy',
+    url='https://gitlab.com/grumps/switchywitchy',
     packages=[
-        'switchy-witchy',
+        'switchywitchy',
     ],
-    package_dir={'switchy-witchy':
-                 'switchy-witchy'},
+    package_dir={'switchywitchy':
+                 'switchywitchy'},
     include_package_data=True,
     install_requires=requirements,
     license="ISCL",
     zip_safe=False,
-    keywords='switchy-witchy',
+    keywords='switchywitchy',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
@@ -58,6 +58,6 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
     ],
-    test_suite='tests.run_tests',
+    test_suite='tests',
     tests_require=test_requirements
 )

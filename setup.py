@@ -23,7 +23,7 @@ parsed_requirements = parse_requirements(
 )
 
 parsed_test_requirements = parse_requirements(
-    'requirements/test.txt',
+    'requirements/tests.txt',
     session=pip.download.PipSession()
 )
 
@@ -58,6 +58,6 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
     ],
-    test_suite='tests',
+    test_suite='tests.run_tests',
     tests_require=test_requirements
 )

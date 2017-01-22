@@ -7,10 +7,50 @@ import psutil
 class Trap(object):
     """
     An alarm or trigger, to be tripped by a process.
+    2S
+    Property handling is as follows:
+
+        - Properties are assigned by default values, but are also overridden based on the configuartion of the application being watched.
+        - The underlying process properties are utilized are set by prefixing the property key with `process_`
+        - Properties for the trap are set by prefixing the keys in configuration with `watch_`
     """
 
+    PROPERTIES = {
+        "watch": {
+            "max_cpu_usage": "30",
+            "max_memory":"60",
+            "heartbeat_interval": "5",
+            "lower_control": "10",
+            "upper_control":  "10"}
+    }
+
+    def handle_properties(self, properties):
+        """
+        pops off the default trap properties, setting
+        them to this instance. This is before it is passed
+        down to the :class:`Proc`
+
+        :returns: properties sans trap properties
+        :rtype: dict
+        """
+        handled_properties = {}
+        for key in properties.keys():
+            property_type, property_key = key.split("_", maxsplit=1)
+            try:
+                if property_key in self.PROPERTIES[property_type]:
+                    setattr(self, property_key, properties[key])
+            except KeyError:
+                if property_type == "process":
+                    handled_properties.update(       
+                        {property_key: properties[key]}) 
+        return handled_properties
+
     def __init__(self, properties):
-        self.process = Proc.create_watch(properties)
+        # sets default attributes
+        for key, value in self.PROPERTIES.items():
+            setattr(self, key, value)
+        self.properties = self.handle_properties(properties)
+        self.process = Proc.create_watch(self.properties)
 
 
 class MemoryTrap(object):

@@ -1,8 +1,9 @@
 """tests for traps package"""
 
+import datetime
 import unittest
 import unittest.mock as mock
-from switchywitchy.traps.models import Proc, Trap
+from switchywitchy.models import Proc, Trap, BaseMessage
 from switchywitchy import SwitchyWitchy
 
 
@@ -26,7 +27,7 @@ class ProcTestCase(unittest.TestCase):
                             "pid": 44},
                            {"name": "eee",
                             "parent": 0,
-                            "pid": 55},]
+                            "pid": 55}, ]
 
     def test_returns_a_proc_without_parent(self):
         """If there's no parent, it should return the initial proc"""
@@ -53,6 +54,7 @@ class ProcTestCase(unittest.TestCase):
         expected_name = p.name()
         self.assertIsInstance(Proc.create_watch({"name": expected_name}), Proc)
 
+
 class TrapTestCase(unittest.TestCase):
     """test for traps"""
 
@@ -61,22 +63,63 @@ class TrapTestCase(unittest.TestCase):
 
     def test_handle_properties_returns_dict(self):
         """tests that handle_properties returns a dict"""
-        p = {"process_name":"stuff"}
+        p = {"process_name": "stuff"}
         s = Trap(p)
         self.assertIsInstance(s.handle_properties(p), dict)
 
     def test_handle_properties_sets_watch_attr(self):
         """when given a key with a prefix of `watch` attr on `Trap`"""
-        p = {"watch_max_cpu_usage":"55",
-             "watch_max_memory":"60"}
+        p = {"watch_max_cpu_usage": "55",
+             "watch_max_memory": "60"}
         s = Trap(p)
         self.assertEqual(s.max_cpu_usage, "55")
         self.assertEqual(s.max_memory, "60")
 
     def test_handle_properties_returns_proc_props(self):
         """when given a key with a prefix of `process` be in a prop on `Trap`"""
-        p = {"process_name":"test_python",
-             "watch_max_cpu_usage":"55"}
+        p = {"process_name": "test_python",
+             "watch_max_cpu_usage": "55"}
         s = Trap(p)
-        self.assertDictEqual(s.properties, {"name":"test_python"})
+        self.assertDictEqual(s.properties, {"name": "test_python"})
         self.assertEqual(s.max_cpu_usage, "55")
+
+
+class MessageTestCase(unittest.TestCase):
+    """tests for messages"""
+    DATA = {'sender': 'stuff',
+            'data': 'stuff', }
+
+    def setUp(self, *args, **kwargs):
+        self.message = BaseMessage
+        print(self.shortDescription())
+
+    def test_is_valid_true(self):
+        """is valid should return true if kwargs are not none"""
+        self.assertTrue(self.message(**self.DATA))
+
+    def test_has_timestamp(self):
+        """when a message obj is created, there should be a timestamp"""
+        message = self.message(**self.DATA)
+        ts_format = '%Y-%m-%dT%H:%M:%S.%f'
+        # just make sure the timestamp parses correctly
+        assert datetime.datetime.strptime(
+            message.create_timestamp(),
+            ts_format)
+
+    def test_assert_is_raised(self):
+        """if either sender or data is not set, an AssertionError is raised"""
+        data = {'data': 'ddd'}
+        data2 = {'sender': 'stuff'}
+        with self.assertRaises(AssertionError):
+            self.message(**data)
+            self.message(**data2)
+
+    def test_is_valid_set_initial(self):
+        """is_valid sets initial"""
+        message = self.message(**self.DATA)
+        # we don't want to compare timestamps
+        message._initial.pop('create_timestamp')
+        self.assertEqual(message.sender,
+                         self.DATA['sender'])
+        self.assertEqual(message.data,
+                         self.DATA['data'])

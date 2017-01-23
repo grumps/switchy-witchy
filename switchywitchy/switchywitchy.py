@@ -2,7 +2,7 @@
 """App Definition for SwitchyWitchy"""
 
 from .config import app_confs
-from .traps.models import Trap
+from .models import Trap
 
 
 class SwitchyWitchy(object):

@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
-
 """Traps capture varying events within the system"""
+__author__ = "Maxwell J. Resnick"
+__docformat__ = "reStructuredText"
+
+import json
+import datetime
 import psutil
 
 
@@ -18,7 +22,7 @@ class Trap(object):
     PROPERTIES = {
         "watch": {
             "max_cpu_usage": "30",
-            "max_memory":"60",
+            "max_memory": "60",
             "heartbeat_interval": "5",
             "lower_control": "10",
             "upper_control":  "10"}
@@ -41,8 +45,8 @@ class Trap(object):
                     setattr(self, property_key, properties[key])
             except KeyError:
                 if property_type == "process":
-                    handled_properties.update(       
-                        {property_key: properties[key]}) 
+                    handled_properties.update(
+                        {property_key: properties[key]})
         return handled_properties
 
     def __init__(self, properties):
@@ -133,3 +137,63 @@ class Proc(psutil.Process):
 
     def __init__(self, pid=None):
         super().__init__(pid=pid)
+
+
+class Message(object):
+    """
+    generates message obj.
+    
+    :param dict data: data for message.
+    """
+    @staticmethod
+    def create(data):
+        """factory for creating an object"""
+        sender = 'this machine'
+        return models.BaseMessage(data, sender)
+
+
+class BaseMessage(object):
+    """
+    Represents a message.
+
+    :param data
+    :param sender
+    .. py:attribute:: _initial message obj before encode, internal use
+    """
+
+    _initial = {}
+
+    def __init__(self, data=None, sender=None):
+        self.is_valid(data, sender)
+        self._initial.update({'create_timestamp': self.create_timestamp()})
+
+    def is_valid(self, data=None, sender=None):
+        """
+        checks for a valid message, sets .initial
+        
+        :returns: boolean
+        :rtype: bool
+        """
+        # TODO
+        assert sender is not None
+        assert data is not None
+        self.sender = sender
+        self.data = data
+        return True
+
+    def create_timestamp(self):
+        """
+        creation timestamp, utc
+        
+        :return: datetime.datetime.utcnow()
+        :rtype: object
+        """
+        return datetime.datetime.utcnow().isoformat()
+
+    def encode(self):
+        """JSON encodes .initial
+        
+        :returns: json.dump
+        :rtype: bytes
+        """
+        return json.dumps(self._initial)

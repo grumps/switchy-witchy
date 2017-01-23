@@ -12,6 +12,22 @@ Subpackages
 Submodules
 ----------
 
+switchywitchy.config module
+---------------------------
+
+.. automodule:: switchywitchy.config
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+switchywitchy.models module
+---------------------------
+
+.. automodule:: switchywitchy.models
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 switchywitchy.switchywitchy module
 ----------------------------------
 

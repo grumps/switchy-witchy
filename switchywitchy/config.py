@@ -1,6 +1,7 @@
 import configparser
+import os
 
-
+package_path = os.path.dirname(__file__)
 
 def dump_config(config):
     for section_name in parser:
@@ -12,6 +13,7 @@ def dump_config(config):
 
 
 def app_confs():
+    parser_file = os.path.join(package_path, "stuff.ini")
     parser = configparser.ConfigParser()
-    parser.read("stuff.ini")
+    parser.read(parser_file)
     return parser

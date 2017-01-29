@@ -5,6 +5,3 @@ __email__ = 'max@ofmax.li'
 __version__ = '0.1.0'
 
 from .switchywitchy import SwitchyWitchy
-
-from . import traps
-from . import messages

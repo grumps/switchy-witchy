@@ -6,12 +6,13 @@ __docformat__ = "reStructuredText"
 import json
 import datetime
 import psutil
+import curio
+import arrow
 
 
 class Trap(object):
     """
     An alarm or trigger, to be tripped by a process.
-    2S
     Property handling is as follows:
 
         - Properties are assigned by default values, but are also overridden based on the configuartion of the application being watched.
@@ -28,12 +29,21 @@ class Trap(object):
             "upper_control":  "10"}
     }
 
+    def __init__(self, properties):
+        # sets default attributes
+        self.state = "OPERATIONAL"
+        for key, value in self.PROPERTIES["watch"].items():
+            setattr(self, key, value)
+        self.properties = self.handle_properties(properties)
+        self.process = Proc.create_watch(self.properties)
+
     def handle_properties(self, properties):
         """
         pops off the default trap properties, setting
         them to this instance. This is before it is passed
         down to the :class:`Proc`
 
+        :param dict properties: dictionary of properties
         :returns: properties sans trap properties
         :rtype: dict
         """
@@ -49,31 +59,21 @@ class Trap(object):
                         {property_key: properties[key]})
         return handled_properties
 
-    def __init__(self, properties):
-        # sets default attributes
-        for key, value in self.PROPERTIES.items():
-            setattr(self, key, value)
-        self.properties = self.handle_properties(properties)
-        self.process = Proc.create_watch(self.properties)
-
-
-class MemoryTrap(object):
-
-    def max_memory(self):
+    async def check_memory(self):
         """
-        some precent of system memory
         """
-        pass
+        current_memory = self.process.memory_percent()
+        current_time = arrow.utcnow().timestamp
+        status = "PASS"
+        if float(self.max_memory) < self.process.memory_percent():
+            status = "FAIL"
+        return current_time, current_memory, status
 
-
-class CpuTrap(object):
-
-    def max_cpu_usage(self):
+    async def check(self):
         """
-        some precent of system cpu
         """
-        pass
-
+        memory_task = await self.check_memory()
+        print(memory_task)
 
 class Proc(psutil.Process):
     """
@@ -89,6 +89,7 @@ class Proc(psutil.Process):
         possible solution - look at os module, or possible systemd
         but could get ugly with various systems. e.g. chrome,
         chrome-sandbox
+
         :param current_proc :class:`psutil.Process`: Process instance Process instance
         :return Proc.id: Process Id
         :rtype int:
@@ -110,9 +111,11 @@ class Proc(psutil.Process):
         we are checking if all fields provided
         match, the current proc.
         access each object's attr, via a 'string'
-        :param proc: the actual process, `psutil.Process`
-        :return bool:
-        :rtype bool:
+
+        :param :class:`psutil.Process` proc: the actual process, `psutil.Process`
+        :param dict properties
+        :return: boolean if all the property fields match the properties
+        :rtype: bool
         """
         property_fields_match = [properties.get(field) == getattr(proc, field)()
                                  for field in properties.keys()]
@@ -123,6 +126,7 @@ class Proc(psutil.Process):
         """
         finds a process based on properties provided. Creates a Proc for
         the parent process.
+
         :param namedtuple properties: properies of the process to watch
         :return Proc:
         :rtype Proc:
@@ -142,7 +146,7 @@ class Proc(psutil.Process):
 class Message(object):
     """
     generates message obj.
-    
+
     :param dict data: data for message.
     """
     @staticmethod
@@ -156,8 +160,8 @@ class BaseMessage(object):
     """
     Represents a message.
 
-    :param data
-    :param sender
+    :param data:
+    :param sender:
     .. py:attribute:: _initial message obj before encode, internal use
     """
 
@@ -170,7 +174,7 @@ class BaseMessage(object):
     def is_valid(self, data=None, sender=None):
         """
         checks for a valid message, sets .initial
-        
+
         :returns: boolean
         :rtype: bool
         """
@@ -184,7 +188,7 @@ class BaseMessage(object):
     def create_timestamp(self):
         """
         creation timestamp, utc
-        
+
         :return: datetime.datetime.utcnow()
         :rtype: object
         """
@@ -192,7 +196,7 @@ class BaseMessage(object):
 
     def encode(self):
         """JSON encodes .initial
-        
+
         :returns: json.dump
         :rtype: bytes
         """

@@ -2,12 +2,13 @@
 """Traps capture varying events within the system"""
 __author__ = "Maxwell J. Resnick"
 __docformat__ = "reStructuredText"
-
+import collections 
 import json
-import datetime
+
 import psutil
 import curio
 import arrow
+
 
 
 class Trap(object):
@@ -19,7 +20,10 @@ class Trap(object):
         - The underlying process properties are utilized are set by prefixing the property key with `process_`
         - Properties for the trap are set by prefixing the keys in configuration with `watch_`
     """
-
+    STATUSES = {
+            "FAIL":"fail",
+            "PASS":"pass"
+            }
     PROPERTIES = {
         "watch": {
             "max_cpu_usage": "30",
@@ -36,7 +40,9 @@ class Trap(object):
             setattr(self, key, value)
         self.properties = self.handle_properties(properties)
         self.process = Proc.create_watch(self.properties)
-
+        self.memory_stats = collections.OrderedDict()
+        self.cpu_stats = collections.OrderedDict()
+        self.queue = curio.Queue()
     def handle_properties(self, properties):
         """
         pops off the default trap properties, setting
@@ -59,21 +65,43 @@ class Trap(object):
                         {property_key: properties[key]})
         return handled_properties
 
+    async def check_cpu(self):
+        """
+        checks cpu, emits status to queue
+        """
+        current_cpu = self.process.cpu_percent(interval=1)
+        current_time = arrow.utcnow().timestamp
+        status = "PASS"
+        if float(self.max_cpu_usage) < current_cpu:
+            status = "FAIL"
+        self.cpu_stats[current_time] = (current_cpu, status)
+        self.queue.put((current_time, self.cpu_stats))
+
+
     async def check_memory(self):
         """
+        checks memory, emits status to queue
         """
         current_memory = self.process.memory_percent()
         current_time = arrow.utcnow().timestamp
         status = "PASS"
-        if float(self.max_memory) < self.process.memory_percent():
+        if float(self.max_memory) < current_memory:
             status = "FAIL"
-        return current_time, current_memory, status
+        self.memory_stats[current_time] = (current_memory, status)
+        self.queue.put((current_time, self.memory_stats))
+
+    async def state(self):
+        """
+        consumes queue to determine state
+        """
+        pass
 
     async def check(self):
         """
         """
-        memory_task = await self.check_memory()
-        print(memory_task)
+        memory_task = await curio.spawn(self.check_memory())
+        cpu_task = await curio.spawn(self.check_cpu())
+
 
 class Proc(psutil.Process):
     """

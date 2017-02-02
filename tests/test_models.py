@@ -1,8 +1,10 @@
 """tests for traps package"""
 
-import datetime
 import unittest
 import unittest.mock as mock
+
+import arrow
+
 from switchywitchy.models import Proc, Trap, BaseMessage
 from switchywitchy import SwitchyWitchy
 
@@ -100,11 +102,9 @@ class MessageTestCase(unittest.TestCase):
     def test_has_timestamp(self):
         """when a message obj is created, there should be a timestamp"""
         message = self.message(**self.DATA)
-        ts_format = '%Y-%m-%dT%H:%M:%S.%f'
         # just make sure the timestamp parses correctly
-        assert datetime.datetime.strptime(
-            message.create_timestamp(),
-            ts_format)
+        assert arrow.get(
+            message.create_timestamp())
 
     def test_assert_is_raised(self):
         """if either sender or data is not set, an AssertionError is raised"""

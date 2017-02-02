@@ -217,10 +217,10 @@ class BaseMessage(object):
         """
         creation timestamp, utc
 
-        :return: datetime.datetime.utcnow()
+        :return: arrow.utcnow()
         :rtype: object
         """
-        return datetime.datetime.utcnow().isoformat()
+        return arrow.utcnow().isoformat(sep="T")
 
     def encode(self):
         """JSON encodes .initial

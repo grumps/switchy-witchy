@@ -66,14 +66,16 @@ class TrapTestCase(unittest.TestCase):
     def test_handle_properties_returns_dict(self):
         """tests that handle_properties returns a dict"""
         p = {"process_name": "stuff"}
-        s = Trap(p)
+        que = "things"  
+        s = Trap(p, que)
         self.assertIsInstance(s.handle_properties(p), dict)
 
     def test_handle_properties_sets_watch_attr(self):
         """when given a key with a prefix of `watch` attr on `Trap`"""
         p = {"watch_max_cpu_usage": "55",
              "watch_max_memory": "60"}
-        s = Trap(p)
+        que = "things" 
+        s = Trap(p, que)
         self.assertEqual(s.max_cpu_usage, "55")
         self.assertEqual(s.max_memory, "60")
 
@@ -81,7 +83,8 @@ class TrapTestCase(unittest.TestCase):
         """when given a key with a prefix of `process` be in a prop on `Trap`"""
         p = {"process_name": "test_python",
              "watch_max_cpu_usage": "55"}
-        s = Trap(p)
+        que = "things"  
+        s = Trap(p, que)
         self.assertDictEqual(s.properties, {"name": "test_python"})
         self.assertEqual(s.max_cpu_usage, "55")
 

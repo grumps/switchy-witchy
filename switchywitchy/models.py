@@ -1,17 +1,19 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 """Traps capture varying events within the system"""
 __author__ = "Maxwell J. Resnick"
 __docformat__ = "reStructuredText"
-import collections 
+
+import collections
 import json
 
 import psutil
 import curio
 import arrow
 
+from .machines import StateMachineMixin
 
 
-class Trap(object):
+class Trap(StateMachineMixin):
     """
     An alarm or trigger, to be tripped by a process.
     Property handling is as follows:
@@ -20,10 +22,6 @@ class Trap(object):
         - The underlying process properties are utilized are set by prefixing the property key with `process_`
         - Properties for the trap are set by prefixing the keys in configuration with `watch_`
     """
-    STATUSES = {
-            "FAIL":"fail",
-            "PASS":"pass"
-            }
     PROPERTIES = {
         "watch": {
             "max_cpu_usage": "30",
@@ -33,16 +31,18 @@ class Trap(object):
             "upper_control":  "10"}
     }
 
-    def __init__(self, properties):
+    def __init__(self, properties, queue):
         # sets default attributes
-        self.state = "OPERATIONAL"
+        self.state = None
         for key, value in self.PROPERTIES["watch"].items():
             setattr(self, key, value)
         self.properties = self.handle_properties(properties)
-        self.process = Proc.create_watch(self.properties)
         self.memory_stats = collections.OrderedDict()
         self.cpu_stats = collections.OrderedDict()
         self.queue = curio.Queue()
+        self.master_queue = queue
+        super().__init__()
+
     def handle_properties(self, properties):
         """
         pops off the default trap properties, setting
@@ -65,18 +65,26 @@ class Trap(object):
                         {property_key: properties[key]})
         return handled_properties
 
+    async def check_status(self, threshold=None, current_value=None):
+        """
+        compare threshold value to, current value
+        fail if current value
+        """
+        if threshold < current_value:
+            return "FAIL"
+        return "PASS"
+
     async def check_cpu(self):
         """
-        checks cpu, emits status to queue
+        checks cpu, emits check to queue
         """
+        # TODO needs to be a subprocess
         current_cpu = self.process.cpu_percent(interval=1)
         current_time = arrow.utcnow().timestamp
-        status = "PASS"
-        if float(self.max_cpu_usage) < current_cpu:
-            status = "FAIL"
+        status = self.check_status(
+            threshold=self.max_cpu_usage, current_usage=current_memory)
         self.cpu_stats[current_time] = (current_cpu, status)
-        self.queue.put((current_time, self.cpu_stats))
-
+        await self.queue.put(("cpu_utilization", current_time, self.cpu_stats))
 
     async def check_memory(self):
         """
@@ -84,23 +92,30 @@ class Trap(object):
         """
         current_memory = self.process.memory_percent()
         current_time = arrow.utcnow().timestamp
-        status = "PASS"
-        if float(self.max_memory) < current_memory:
-            status = "FAIL"
+        status = self.check_status(
+            threshold=self.max_memory, current_usage=current_memory)
         self.memory_stats[current_time] = (current_memory, status)
-        self.queue.put((current_time, self.memory_stats))
-
-    async def state(self):
-        """
-        consumes queue to determine state
-        """
-        pass
+        await self.queue.put(("memory_utilization", current_time, self.memory_stats))
 
     async def check(self):
         """
         """
         memory_task = await curio.spawn(self.check_memory())
         cpu_task = await curio.spawn(self.check_cpu())
+
+    def __repr__(self):
+        try:
+            return "Trap for {} {}".format(self.process.name(),
+                                       self.state)
+        except AttributeError:
+            return "Unbound Trap"
+
+    def __str__(self):
+        try:
+            return "Trap for {} {}".format(self.process.name(),
+                                       self.state)
+        except AttributeError:
+            return "Unbound Trap"
 
 
 class Proc(psutil.Process):

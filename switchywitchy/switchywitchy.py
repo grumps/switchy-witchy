@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """App Definition for SwitchyWitchy"""
 
+import curio
+
 from .config import app_confs
 from .models import Trap
 
@@ -10,6 +12,7 @@ class SwitchyWitchy(object):
 
     def __init__(self):
         self.watches = []
+        self.queue = curio.Queue()
 
     def setup_watches(self):
         """
@@ -18,4 +21,4 @@ class SwitchyWitchy(object):
         apps = app_confs()
         for app in apps.sections():
             app_property = apps[app]
-            self.watches.append(Trap(app_property))
+            self.watches.append(Trap(app_property, self.queue))

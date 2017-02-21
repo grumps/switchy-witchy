@@ -4,6 +4,7 @@ import unittest
 import unittest.mock as mock
 
 import arrow
+import curio
 
 from switchywitchy.models import Proc, Trap, BaseMessage
 from switchywitchy import SwitchyWitchy
@@ -66,7 +67,7 @@ class TrapTestCase(unittest.TestCase):
     def test_handle_properties_returns_dict(self):
         """tests that handle_properties returns a dict"""
         p = {"process_name": "stuff"}
-        que = "things"  
+        que = "things"
         s = Trap(p, que)
         self.assertIsInstance(s.handle_properties(p), dict)
 
@@ -74,7 +75,7 @@ class TrapTestCase(unittest.TestCase):
         """when given a key with a prefix of `watch` attr on `Trap`"""
         p = {"watch_max_cpu_usage": "55",
              "watch_max_memory": "60"}
-        que = "things" 
+        que = "things"
         s = Trap(p, que)
         self.assertEqual(s.max_cpu_usage, "55")
         self.assertEqual(s.max_memory, "60")
@@ -83,10 +84,36 @@ class TrapTestCase(unittest.TestCase):
         """when given a key with a prefix of `process` be in a prop on `Trap`"""
         p = {"process_name": "test_python",
              "watch_max_cpu_usage": "55"}
-        que = "things"  
+        que = "things"
         s = Trap(p, que)
         self.assertDictEqual(s.properties, {"name": "test_python"})
         self.assertEqual(s.max_cpu_usage, "55")
+
+    async def consumer(self, queue, results, label):
+        while True:
+            item = await queue.get()
+            if item is None:
+                break
+            results.append((label, item))
+            await queue.task_done()
+    def test_check_memory_is_producer(self):
+        """check memory should always produce a message to queue"""
+        results = None
+        p = {"process_name": "test_python",
+             "watch_max_cpu_usage": "55"}
+        que = "things"
+        trap = Trap(p, que)
+
+        async def main():
+            await curio.spawn(self.consumer(trap.queue,
+                                            results,
+                                            "wtf"))
+            await curio.spawn(trap.check_memory)
+
+        curio.run(main())
+        # need to mock the memory call def on Proc.
+        self.assertEqual(True, True)
+
 
 
 class MessageTestCase(unittest.TestCase):

@@ -31,16 +31,17 @@ class Trap(StateMachineMixin):
             "upper_control":  "10"}
     }
 
-    def __init__(self, properties, queue):
+    def __init__(self, properties, app_queue):
         # sets default attributes
         self.state = None
         for key, value in self.PROPERTIES["watch"].items():
             setattr(self, key, value)
+        self.process = None 
         self.properties = self.handle_properties(properties)
         self.memory_stats = collections.OrderedDict()
         self.cpu_stats = collections.OrderedDict()
         self.queue = curio.Queue()
-        self.master_queue = queue
+        self.app_queue = app_queue
         super().__init__()
 
     def handle_properties(self, properties):
@@ -65,12 +66,12 @@ class Trap(StateMachineMixin):
                         {property_key: properties[key]})
         return handled_properties
 
-    async def check_status(self, threshold=None, current_value=None):
+    def check_status(self, threshold=None, current_usage=None):
         """
         compare threshold value to, current value
         fail if current value
         """
-        if threshold < current_value:
+        if threshold < current_usage:
             return "FAIL"
         return "PASS"
 
@@ -212,7 +213,9 @@ class BaseMessage(object):
 
     def __init__(self, data=None, sender=None):
         self.is_valid(data, sender)
-        self._initial.update({'create_timestamp': self.create_timestamp()})
+        self._initial.update({'create_timestamp': self.create_timestamp(),
+                              "data": data,
+                              "sender": sender})
 
     def is_valid(self, data=None, sender=None):
         """

@@ -96,24 +96,26 @@ class TrapTestCase(unittest.TestCase):
                 break
             results.append((label, item))
             await queue.task_done()
-    def test_check_memory_is_producer(self):
+
+    @mock.patch("switchywitchy.models.Proc", autospec=True)
+    def test_check_memory_is_producer(self, mock_proc):
         """check memory should always produce a message to queue"""
-        results = None
+        results = []
         p = {"process_name": "test_python",
              "watch_max_cpu_usage": "55"}
         que = "things"
         trap = Trap(p, que)
-
+        trap.process = mock_proc
+        mock_proc.memory_percent = mock.MagicMock(return_value="56")
         async def main():
             await curio.spawn(self.consumer(trap.queue,
                                             results,
                                             "wtf"))
-            await curio.spawn(trap.check_memory)
-
+            await curio.spawn(trap.check_memory())
+            await curio.spawn(trap.queue.put(None))
         curio.run(main())
         # need to mock the memory call def on Proc.
-        self.assertEqual(True, True)
-
+        self.assertTrue(results[0][1])
 
 
 class MessageTestCase(unittest.TestCase):

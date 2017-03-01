@@ -76,8 +76,6 @@ class StateMachineMixin(object):
 
     def __init__(self):
         self.state = self.STATES["STARTING"]()
-        self.process = None
-
     async def next(self, results):
         """shortcut to state's next"""
         return self.state.next(results)

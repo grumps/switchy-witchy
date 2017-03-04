@@ -63,6 +63,12 @@ class TrapTestCase(unittest.TestCase):
 
     def setUp(self):
         print(self.shortDescription())
+        self.results = []
+        self.p = {"process_name": "test_python",
+             "watch_max_cpu_usage": "55",
+             "watch_max_memory": "60"}
+        self.fake_main_que = "things"
+        self.trap = Trap(self.p, self.fake_main_que) 
 
     def test_handle_properties_returns_dict(self):
         """tests that handle_properties returns a dict"""
@@ -73,21 +79,13 @@ class TrapTestCase(unittest.TestCase):
 
     def test_handle_properties_sets_watch_attr(self):
         """when given a key with a prefix of `watch` attr on `Trap`"""
-        p = {"watch_max_cpu_usage": "55",
-             "watch_max_memory": "60"}
-        que = "things"
-        s = Trap(p, que)
-        self.assertEqual(s.max_cpu_usage, "55")
-        self.assertEqual(s.max_memory, "60")
+        self.assertEqual(self.trap.max_cpu_usage, "55")
+        self.assertEqual(self.trap.max_memory, "60")
 
     def test_handle_properties_returns_proc_props(self):
         """when given a key with a prefix of `process` be in a prop on `Trap`"""
-        p = {"process_name": "test_python",
-             "watch_max_cpu_usage": "55"}
-        que = "things"
-        s = Trap(p, que)
-        self.assertDictEqual(s.properties, {"name": "test_python"})
-        self.assertEqual(s.max_cpu_usage, "55")
+        self.assertDictEqual(self.trap.properties, {"name": "test_python"})
+        self.assertEqual(self.trap.max_cpu_usage, "55")
 
     async def consumer(self, queue, results, label):
         while True:
@@ -100,28 +98,37 @@ class TrapTestCase(unittest.TestCase):
     @mock.patch("switchywitchy.models.Proc", autospec=True)
     def test_check_memory_is_producer(self, mock_proc):
         """check memory should always produce a message to queue"""
-        results = []
-        p = {"process_name": "test_python",
-             "watch_max_cpu_usage": "55"}
-        que = "things"
-        trap = Trap(p, que)
-        trap.process = mock_proc
+        self.trap.process = mock_proc
         mock_proc.memory_percent = mock.MagicMock(return_value="56")
         async def main():
-            await curio.spawn(self.consumer(trap.queue,
-                                            results,
+            await curio.spawn(self.consumer(self.trap.queue,
+                                            self.results,
                                             "wtf"))
-            await curio.spawn(trap.check_memory())
-            await curio.spawn(trap.queue.put(None))
+            await curio.spawn(self.trap.check_memory())
+            await curio.spawn(self.trap.queue.put(None))
         curio.run(main())
         # need to mock the memory call def on Proc.
-        self.assertTrue(results[0][1])
+        self.assertTrue(self.results[0][1])
 
+    @mock.patch("switchywitchy.models.Proc", autospec=True)
+    def test_check_cpu_is_producer(self, mock_proc):
+        """check memory should always produce a message to queue"""
+        self.trap.process = mock_proc
+        mock_proc.cpu_percent = mock.MagicMock(return_value="56")
+        async def main():
+            await curio.spawn(self.consumer(self.trap.queue,
+                                            self.results,
+                                            "wtf"))
+            await curio.spawn(self.trap.check_cpu())
+            await curio.spawn(self.trap.queue.put(None))
+        curio.run(main())
+        self.assertTrue(self.results[0][1]) 
 
 class MessageTestCase(unittest.TestCase):
     """tests for messages"""
     DATA = {'sender': 'stuff',
             'data': 'stuff', }
+
 
     def setUp(self, *args, **kwargs):
         self.message = BaseMessage

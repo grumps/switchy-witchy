@@ -83,8 +83,9 @@ class Trap(StateMachineMixin):
         current_cpu = self.process.cpu_percent(interval=1)
         current_time = arrow.utcnow().timestamp
         status = self.check_status(
-            threshold=self.max_cpu_usage, current_usage=current_memory)
+            threshold=self.max_cpu_usage, current_usage=current_cpu)
         self.cpu_stats[current_time] = (current_cpu, status)
+        print("here's the queue: %s" % self.queue)
         await self.queue.put(("cpu_utilization", current_time, self.cpu_stats))
 
     async def check_memory(self):

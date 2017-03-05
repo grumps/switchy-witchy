@@ -3,6 +3,8 @@
 __author__ = "Maxwell J. Resnick"
 __docformat__ = "reStructuredText"
 
+import logging
+
 import collections
 import json
 
@@ -12,6 +14,7 @@ import arrow
 
 from .machines import StateMachineMixin
 
+logger = logging.getLogger(__name__)
 
 class Trap(StateMachineMixin):
     """
@@ -34,9 +37,9 @@ class Trap(StateMachineMixin):
     def __init__(self, properties, app_queue):
         # sets default attributes
         self.state = None
+        self.process = None
         for key, value in self.PROPERTIES["watch"].items():
             setattr(self, key, value)
-        self.process = None 
         self.properties = self.handle_properties(properties)
         self.memory_stats = collections.OrderedDict()
         self.cpu_stats = collections.OrderedDict()
@@ -66,12 +69,12 @@ class Trap(StateMachineMixin):
                         {property_key: properties[key]})
         return handled_properties
 
-    def check_status(self, threshold=None, current_usage=None):
+    def check_status(self, threshold=None, current_value=None):
         """
         compare threshold value to, current value
         fail if current value
         """
-        if threshold < current_usage:
+        if threshold < current_value:
             return "FAIL"
         return "PASS"
 
@@ -83,9 +86,9 @@ class Trap(StateMachineMixin):
         current_cpu = self.process.cpu_percent(interval=1)
         current_time = arrow.utcnow().timestamp
         status = self.check_status(
-            threshold=self.max_cpu_usage, current_usage=current_cpu)
+            threshold=self.max_cpu_usage, current_value=current_cpu)
+        logger.debug("check cpu status is: %s".format(status))
         self.cpu_stats[current_time] = (current_cpu, status)
-        print("here's the queue: %s" % self.queue)
         await self.queue.put(("cpu_utilization", current_time, self.cpu_stats))
 
     async def check_memory(self):
@@ -95,7 +98,7 @@ class Trap(StateMachineMixin):
         current_memory = self.process.memory_percent()
         current_time = arrow.utcnow().timestamp
         status = self.check_status(
-            threshold=self.max_memory, current_usage=current_memory)
+            threshold=self.max_memory, current_value=current_memory)
         self.memory_stats[current_time] = (current_memory, status)
         await self.queue.put(("memory_utilization", current_time, self.memory_stats))
 
@@ -213,7 +216,7 @@ class BaseMessage(object):
     _initial = {}
 
     def __init__(self, data=None, sender=None):
-        self.is_valid(data, sender)
+        self.is_valid(data=data, sender=sender)
         self._initial.update({'create_timestamp': self.create_timestamp(),
                               "data": data,
                               "sender": sender})

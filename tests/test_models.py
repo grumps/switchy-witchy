@@ -9,6 +9,9 @@ import curio
 from switchywitchy.models import Proc, Trap, BaseMessage
 from switchywitchy import SwitchyWitchy
 
+import logging
+
+logger = logging.getLogger("trap_test")
 
 class ProcTestCase(unittest.TestCase):
     """tests for Proc"""
@@ -65,10 +68,10 @@ class TrapTestCase(unittest.TestCase):
         print(self.shortDescription())
         self.results = []
         self.p = {"process_name": "test_python",
-             "watch_max_cpu_usage": "55",
-             "watch_max_memory": "60"}
+                  "watch_max_cpu_usage": "55",
+                  "watch_max_memory": "60"}
         self.fake_main_que = "things"
-        self.trap = Trap(self.p, self.fake_main_que) 
+        self.trap = Trap(self.p, self.fake_main_que)
 
     def test_handle_properties_returns_dict(self):
         """tests that handle_properties returns a dict"""
@@ -87,48 +90,60 @@ class TrapTestCase(unittest.TestCase):
         self.assertDictEqual(self.trap.properties, {"name": "test_python"})
         self.assertEqual(self.trap.max_cpu_usage, "55")
 
-    async def consumer(self, queue, results, label):
+    async def consumer(self, queue, results):
         while True:
             item = await queue.get()
             if item is None:
                 break
-            results.append((label, item))
+            results.append(item)
             await queue.task_done()
 
     @mock.patch("switchywitchy.models.Proc", autospec=True)
-    def test_check_memory_is_producer(self, mock_proc):
-        """check memory should always produce a message to queue"""
-        self.trap.process = mock_proc
-        mock_proc.memory_percent = mock.MagicMock(return_value="56")
-        async def main():
-            await curio.spawn(self.consumer(self.trap.queue,
-                                            self.results,
-                                            "wtf"))
-            await curio.spawn(self.trap.check_memory())
-            await curio.spawn(self.trap.queue.put(None))
-        curio.run(main())
-        # need to mock the memory call def on Proc.
-        self.assertTrue(self.results[0][1])
-
-    @mock.patch("switchywitchy.models.Proc", autospec=True)
     def test_check_cpu_is_producer(self, mock_proc):
-        """check memory should always produce a message to queue"""
+        """check cpu should always produce a message to queue"""
         self.trap.process = mock_proc
         mock_proc.cpu_percent = mock.MagicMock(return_value="56")
         async def main():
             await curio.spawn(self.consumer(self.trap.queue,
-                                            self.results,
-                                            "wtf"))
-            await curio.spawn(self.trap.check_cpu())
+                                            self.results))
+            rs1 = await curio.spawn(self.trap.check_cpu())
+            await rs1.join()
+            mock_proc.cpu_percent = mock.MagicMock(return_value="54")
+            rs2 = await curio.spawn(self.trap.check_cpu())
             await curio.spawn(self.trap.queue.put(None))
         curio.run(main())
-        self.assertTrue(self.results[0][1]) 
+        self.assertTrue(self.results[0])
+        # TODO compare results to expected d.s. 
+        found_results = [result[2][result[1]] for result in self.results]
+        expected_results = [
+                ("56", "FAIL"),
+                ("54", "PASS"),
+                ]
+        self.assertListEqual(found_results, expected_results)
+
+    @mock.patch("switchywitchy.models.Proc", autospec=True)
+    def test_check_memory_produces_status(self, mock_proc):
+        """check memory should always produce a message to queue"""
+        self.trap.process = mock_proc
+        async def main():
+            await curio.spawn(self.consumer(self.trap.queue,
+                                            self.results))
+            mock_proc.memory_percent = mock.MagicMock(return_value="56")
+            await curio.spawn(self.trap.check_memory())
+            mock_proc.memory_percent = mock.MagicMock(return_value="62")
+            await curio.spawn(self.trap.check_memory())
+            await curio.spawn(self.trap.queue.put(None))
+        curio.run(main())
+        expected_results = [
+                ("", "")
+                ]
+        self.assertTrue(self.results[0])
+
 
 class MessageTestCase(unittest.TestCase):
     """tests for messages"""
     DATA = {'sender': 'stuff',
             'data': 'stuff', }
-
 
     def setUp(self, *args, **kwargs):
         self.message = BaseMessage

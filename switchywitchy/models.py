@@ -85,10 +85,10 @@ class Trap(StateMachineMixin):
         # TODO needs to be a subprocess
         current_cpu = self.process.cpu_percent(interval=1)
         current_time = arrow.utcnow().timestamp
-        logger.debug("max_cpu_usage {} current_usage {}".format(self.max_cpu_usage, current_cpu))
+        logger.debug("{} max_cpu_usage {} current_usage {}".format(current_time, self.max_cpu_usage, current_cpu))
         status = self.check_status(
             threshold=self.max_cpu_usage, current_value=current_cpu)
-        logger.debug("check cpu status is: {}".format(status))
+        logger.debug("{} check cpu status is: {}".format(current_time, status))
         self.cpu_stats[current_time] = (current_cpu, status)
         await self.queue.put(("cpu_utilization", current_time, self.cpu_stats))
 

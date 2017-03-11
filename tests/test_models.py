@@ -107,9 +107,12 @@ class TrapTestCase(unittest.TestCase):
             await curio.spawn(self.consumer(self.trap.queue,
                                             self.results))
             rs1 = await curio.spawn(self.trap.check_cpu())
-            await rs1.join()
+            logger.debug("rs1 run.")
+            await curio.sleep(1)
             mock_proc.cpu_percent = mock.MagicMock(return_value="54")
             rs2 = await curio.spawn(self.trap.check_cpu())
+            logger.debug("rs2 run.")
+            await rs2.join()
             await curio.spawn(self.trap.queue.put(None))
         curio.run(main())
         self.assertTrue(self.results[0])
@@ -129,13 +132,15 @@ class TrapTestCase(unittest.TestCase):
             await curio.spawn(self.consumer(self.trap.queue,
                                             self.results))
             mock_proc.memory_percent = mock.MagicMock(return_value="56")
-            await curio.spawn(self.trap.check_memory())
+            rs1 = await curio.spawn(self.trap.check_memory())
+            await curio.sleep(1)
             mock_proc.memory_percent = mock.MagicMock(return_value="62")
-            await curio.spawn(self.trap.check_memory())
+            rs2 = await curio.spawn(self.trap.check_memory())
             await curio.spawn(self.trap.queue.put(None))
         curio.run(main())
         expected_results = [
-                ("", "")
+                ("62", "FAIL"),
+                ("56", "PASS")
                 ]
         self.assertTrue(self.results[0])
 

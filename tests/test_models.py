@@ -131,18 +131,19 @@ class TrapTestCase(unittest.TestCase):
         async def main():
             await curio.spawn(self.consumer(self.trap.queue,
                                             self.results))
-            mock_proc.memory_percent = mock.MagicMock(return_value="56")
+            mock_proc.memory_percent = mock.MagicMock(return_value="62")
             rs1 = await curio.spawn(self.trap.check_memory())
             await curio.sleep(1)
-            mock_proc.memory_percent = mock.MagicMock(return_value="62")
+            mock_proc.memory_percent = mock.MagicMock(return_value="56")
             rs2 = await curio.spawn(self.trap.check_memory())
             await curio.spawn(self.trap.queue.put(None))
         curio.run(main())
+        found_results = [result[2][result[1]] for result in self.results] 
         expected_results = [
                 ("62", "FAIL"),
                 ("56", "PASS")
                 ]
-        self.assertTrue(self.results[0])
+        self.assertListEqual(found_results, expected_results)
 
 
 class MessageTestCase(unittest.TestCase):

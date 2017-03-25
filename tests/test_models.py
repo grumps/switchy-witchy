@@ -13,6 +13,7 @@ import logging
 
 logger = logging.getLogger("trap_test")
 
+
 class ProcTestCase(unittest.TestCase):
     """tests for Proc"""
 
@@ -116,16 +117,16 @@ class TrapTestCase(unittest.TestCase):
             await curio.spawn(self.trap.queue.put(None))
         curio.run(main())
         self.assertTrue(self.results[0])
-        # TODO compare results to expected d.s. 
+        # TODO compare results to expected d.s.
         found_results = [result[2][result[1]] for result in self.results]
         expected_results = [
-                ("56", "FAIL"),
-                ("54", "PASS"),
-                ]
+            ("56", "FAIL"),
+            ("54", "PASS"),
+        ]
         self.assertListEqual(found_results, expected_results)
 
     @mock.patch("switchywitchy.models.Proc", autospec=True)
-    def test_check_memory_produces_status(self, mock_proc):
+    def test_check_memory_produces_statuses(self, mock_proc):
         """check memory should always produce a message to queue"""
         self.trap.process = mock_proc
         async def main():
@@ -138,12 +139,13 @@ class TrapTestCase(unittest.TestCase):
             rs2 = await curio.spawn(self.trap.check_memory())
             await curio.spawn(self.trap.queue.put(None))
         curio.run(main())
-        found_results = [result[2][result[1]] for result in self.results] 
-        expected_results = [
-                ("62", "FAIL"),
-                ("56", "PASS")
-                ]
-        self.assertListEqual(found_results, expected_results)
+        # the data attr is reference
+        found_data = list(self.results[0].data.values())
+        expected_data = [
+            ("62", "FAIL"),
+            ("56", "PASS")
+        ]
+        self.assertListEqual(found_data, expected_data)
 
 
 class MessageTestCase(unittest.TestCase):

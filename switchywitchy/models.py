@@ -16,6 +16,7 @@ from .machines import StateMachineMixin
 
 logger = logging.getLogger(__name__)
 
+
 class Trap(StateMachineMixin):
     """
     An alarm or trigger, to be tripped by a process.
@@ -85,7 +86,8 @@ class Trap(StateMachineMixin):
         # TODO needs to be a subprocess
         current_cpu = self.process.cpu_percent(interval=1)
         current_time = arrow.utcnow().timestamp
-        logger.debug("{} max_cpu_usage {} current_usage {}".format(current_time, self.max_cpu_usage, current_cpu))
+        logger.debug("{} max_cpu_usage {} current_usage {}".format(
+            current_time, self.max_cpu_usage, current_cpu))
         status = self.check_status(
             threshold=self.max_cpu_usage, current_value=current_cpu)
         logger.debug("{} check cpu status is: {}".format(current_time, status))
@@ -101,7 +103,11 @@ class Trap(StateMachineMixin):
         status = self.check_status(
             threshold=self.max_memory, current_value=current_memory)
         self.memory_stats[current_time] = (current_memory, status)
-        await self.queue.put(("memory_utilization", current_time, self.memory_stats))
+        message = Message.create(("memory_utilization",
+                                  current_time,
+                                  self.memory_stats))
+        await self.queue.put(message)
+                             
 
     async def check(self):
         """
@@ -112,14 +118,14 @@ class Trap(StateMachineMixin):
     def __repr__(self):
         try:
             return "Trap for {} {}".format(self.process.name(),
-                                       self.state)
+                                           self.state)
         except AttributeError:
             return "Unbound Trap"
 
     def __str__(self):
         try:
             return "Trap for {} {}".format(self.process.name(),
-                                       self.state)
+                                           self.state)
         except AttributeError:
             return "Unbound Trap"
 
@@ -201,8 +207,10 @@ class Message(object):
     @staticmethod
     def create(data):
         """factory for creating an object"""
-        sender = 'this machine'
-        return models.BaseMessage(data, sender)
+        sender = data[0]
+        timestamp = data[1]
+        result_data = data[2]
+        return BaseMessage(result_data, sender, timestamp)
 
 
 class BaseMessage(object):
@@ -216,8 +224,9 @@ class BaseMessage(object):
 
     _initial = {}
 
-    def __init__(self, data=None, sender=None):
+    def __init__(self, data=None, sender=None, timestamp=None):
         self.is_valid(data=data, sender=sender)
+        self.timestamp = timestamp
         self._initial.update({'create_timestamp': self.create_timestamp(),
                               "data": data,
                               "sender": sender})
@@ -245,6 +254,12 @@ class BaseMessage(object):
         """
         return arrow.utcnow().isoformat(sep="T")
 
+    def __repr__(self):
+        return self.__str__()
+    
+    def __str__(self):
+        return "Message: {}, {}".format(self.timestamp, self.data)
+   
     def encode(self):
         """JSON encodes .initial
 

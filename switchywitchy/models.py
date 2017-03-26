@@ -86,18 +86,19 @@ class Trap(StateMachineMixin):
         # TODO needs to be a subprocess
         current_cpu = self.process.cpu_percent(interval=1)
         current_time = arrow.utcnow().timestamp
-        logger.debug("{} max_cpu_usage {} current_usage {}".format(
-            current_time, self.max_cpu_usage, current_cpu))
         status = self.check_status(
             threshold=self.max_cpu_usage, current_value=current_cpu)
         logger.debug("{} check cpu status is: {}".format(current_time, status))
         self.cpu_stats[current_time] = (current_cpu, status)
-        await self.queue.put(("cpu_utilization", current_time, self.cpu_stats))
+        message = Message.create(
+            ("cpu_utilization", current_time, self.cpu_stats))
+        await self.queue.put(message)
 
     async def check_memory(self):
         """
         checks memory, emits status to queue
         """
+        # TODO needs to be a subprocess
         current_memory = self.process.memory_percent()
         current_time = arrow.utcnow().timestamp
         status = self.check_status(
@@ -106,8 +107,9 @@ class Trap(StateMachineMixin):
         message = Message.create(("memory_utilization",
                                   current_time,
                                   self.memory_stats))
+        logger.debug("{} check memory status is: {}".format(
+            current_time, status))
         await self.queue.put(message)
-                             
 
     async def check(self):
         """
@@ -256,10 +258,10 @@ class BaseMessage(object):
 
     def __repr__(self):
         return self.__str__()
-    
+
     def __str__(self):
         return "Message: {}, {}".format(self.timestamp, self.data)
-   
+
     def encode(self):
         """JSON encodes .initial
 

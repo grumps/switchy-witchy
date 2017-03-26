@@ -118,12 +118,12 @@ class TrapTestCase(unittest.TestCase):
         curio.run(main())
         self.assertTrue(self.results[0])
         # TODO compare results to expected d.s.
-        found_results = [result[2][result[1]] for result in self.results]
-        expected_results = [
+        found_data = list(self.results[0].data.values())
+        expected_data = [
             ("56", "FAIL"),
             ("54", "PASS"),
         ]
-        self.assertListEqual(found_results, expected_results)
+        self.assertListEqual(found_data, expected_data)
 
     @mock.patch("switchywitchy.models.Proc", autospec=True)
     def test_check_memory_produces_statuses(self, mock_proc):

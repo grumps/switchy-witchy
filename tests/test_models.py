@@ -100,7 +100,7 @@ class TrapTestCase(unittest.TestCase):
             await queue.task_done()
 
     @mock.patch("switchywitchy.models.Proc", autospec=True)
-    def test_check_cpu_is_producer(self, mock_proc):
+    def test_check_cpu_produces_statuses(self, mock_proc):
         """check cpu should always produce a message to queue"""
         self.trap.process = mock_proc
         mock_proc.cpu_percent = mock.MagicMock(return_value="56")

@@ -3,13 +3,6 @@
 __author__ = "Maxwell J. Resnick"
 __docformat__ = "reStructuredText"
 
-import collections
-import json
-
-import psutil
-import curio
-import arrow
-
 
 class BaseState(object):
     """
@@ -18,19 +11,18 @@ class BaseState(object):
 
     @classmethod
     def next(cls, results=None):
-        """Validates right to transition
+        """
+        Validates right to transition
 
         :param current_state:if none, we are to transition
         :returns: cls, either `Starting` or its current_state
         :rtype: cls
+
         """
         # we should start
-        if results is cls.NAME: 
+        if results is cls.NAME:
             return cls
         return cls.NEXT_STATE
-
-class Running(BaseState):
-    pass
 
 
 class Failing(BaseState):
@@ -44,14 +36,21 @@ class Passing(BaseState):
     """
     failed state
     """
-    pass
+    NAME = "PASSING"
+    #NEXT_STATE = ()
+
+
+class Running(BaseState):
+
+    NAME = "RUNNING"
+    NEXT_STATE = (Passing, Failing)
 
 
 class Starting(BaseState):
     """Starting state"""
 
-    NEXT_STATE = Running
-    NAME = "Starting"
+    NEXT_STATE = (Running,)
+    NAME = "STARTING"
 
     async def action(self):
         """
@@ -62,27 +61,42 @@ class Starting(BaseState):
         self.process = Proc.create_watch(self.properties)
         await self.queue.put("RUNNING",)
 
+state_entry = NamedTuple("State", ["output_states", "state_class"])
+
 
 class StateMachineMixin(object):
     """
     base class for all statemine obj.
     """
-    STATES = {
-        "STARTING": Starting,
-        "FAIL": Failing,
-        "RUNNING": Running,
-        "PASS": Passing
+
+    STATE_TABLE = {
+        "STARTING": state_entry((Running,), Starting),
+        "FAILING": state_entry((Passing,), Failing),
+        "RUNNING": state_entry((Passing, Failing), Running),
+        "PASSING": state_entry((Running,), Passing),
     }
 
     def __init__(self):
-        self.state = self.STATES["STARTING"]()
-    async def next(self, results):
-        """shortcut to state's next"""
-        return self.state.next(results)
+        self.setup_init_state()
 
-    async def action(self):
-        """shortcut to state's action"""
-        await self.state.action()
+    def __getattr__(self, name):
+        """
+        automatically forwards to the state class.
+        """
+        attr = getattr(self.state, name)
+        if attr:
+            return attr
+        else:
+            raise AttributeError
+
+    def setup_init_state(self):
+        """
+        sets the initial state.
+        """
+        start_state_entry = self.STATE_TABLE["STARTING"]
+        start = start_state_entry.state_class(
+            start_state_entry.output_states)
+        self.state = start()
 
     async def transition(self):
         """

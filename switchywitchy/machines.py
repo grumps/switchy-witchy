@@ -1,5 +1,19 @@
-#-*- coding: utf-8 -*-
-"""Traps capture varying events within the system"""
+#-*- coding: utf-8 -*- # noqa: E265
+
+"""
+Machines are finite state machines and the various states that a machince can
+achieve.
+
+The transitions defined by a "transition table" which is dictionary with a
+namedtuple as the value
+
+    ```
+    {"foo": namedtuple()}
+    ```
+
+Each state class takes a reference to the state table on contstruction
+
+"""
 __author__ = "Maxwell J. Resnick"
 __docformat__ = "reStructuredText"
 
@@ -10,10 +24,10 @@ class BaseState(object):
     """
     base class for all state objects
     """
-    
+
     def __init__(self, state_table=None):
-        self.sate_table = next_states
-    
+        self.sate_table = state_table
+
     def transtions(self):
         """transtions for class"""
         pass
@@ -65,22 +79,24 @@ class Starting(BaseState):
         Sets up transition
         """
         print("running action on start state")
-        self.process = Proc.create_watch(self.properties)
+        if not self.process:
+            # TODO error message fmt
+            await self.queue.put("FAILING", )
         await self.queue.put("RUNNING",)
-
 
 
 class StateMachineMixin(object):
     """
     base class for all statemine obj.
     """
-    STATE_ENTRY = collections.namedtuple("state", ["output_states", "state_class"]) 
-    # STATE_TABLE = {
-    #     "STARTING": state_entry((Running,), Starting),
-    #     "FAILING": state_entry((Passing,), Failing),
-    #     "RUNNING": state_entry((Passing, Failing), Running),
-    #     "PASSING": state_entry((Running,), Passing),
-    # }
+    STATE_ENTRY = collections.namedtuple(
+        "state", ["output_states", "state_class"])
+    STATE_TABLE = {
+        "STARTING": STATE_ENTRY((Running,), Starting),
+        "FAILING": STATE_ENTRY((Passing,), Failing),
+        "RUNNING": STATE_ENTRY((Passing, Failing), Running),
+        "PASSING": STATE_ENTRY((Running,), Passing),
+    }
 
     def __init__(self):
         self.setup_init_state()
@@ -99,19 +115,20 @@ class StateMachineMixin(object):
         """
         sets the initial state.
         """
-        start_state_entry = self.STATE_TABLE["STARTING"]
-        start = start_state_entry.state_class(
-            start_state_entry.output_states)
+        start_STATE_ENTRY = self.STATE_TABLE["STARTING"]
+        start = start_STATE_ENTRY.state_class(
+            start_STATE_ENTRY.output_states)
         self.state = start()
 
     async def transition(self):
         """
         background task that consumes queue to determine state
         """
+
         while True:
             sender, time_stamp, results = await self.queue.get()
-            result_state = results[time_stamp]
-            self.state = self.next(results)
+            # result_state = results[time_stamp]
+            self.state = self.next(results, )
             if self.state:
                 await self.action()
                 print('Consumer got', )

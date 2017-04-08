@@ -46,6 +46,7 @@ clean-test:
 	rm -fr htmlcov/
 
 lint:
+	pip install -r requirements/tests.txt 
 	flake8 switchywitchy tests
 
 test:

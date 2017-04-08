@@ -46,6 +46,8 @@ class Trap(StateMachineMixin):
         self.cpu_stats = collections.OrderedDict()
         self.queue = curio.Queue()
         self.app_queue = app_queue
+        import ipdb
+        ipdb.set_trace()
         super().__init__()
 
     def handle_properties(self, properties):

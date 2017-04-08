@@ -3,11 +3,20 @@
 __author__ = "Maxwell J. Resnick"
 __docformat__ = "reStructuredText"
 
+import collections
+
 
 class BaseState(object):
     """
     base class for all state objects
     """
+    
+    def __init__(self, state_table=None):
+        self.sate_table = next_states
+    
+    def transtions(self):
+        """transtions for class"""
+        pass
 
     @classmethod
     def next(cls, results=None):
@@ -29,7 +38,7 @@ class Failing(BaseState):
     """
     failed state
     """
-    pass
+    NAME = "FAILING"
 
 
 class Passing(BaseState):
@@ -37,13 +46,11 @@ class Passing(BaseState):
     failed state
     """
     NAME = "PASSING"
-    #NEXT_STATE = ()
 
 
 class Running(BaseState):
-
+    """Running state"""
     NAME = "RUNNING"
-    NEXT_STATE = (Passing, Failing)
 
 
 class Starting(BaseState):
@@ -61,20 +68,19 @@ class Starting(BaseState):
         self.process = Proc.create_watch(self.properties)
         await self.queue.put("RUNNING",)
 
-state_entry = NamedTuple("State", ["output_states", "state_class"])
 
 
 class StateMachineMixin(object):
     """
     base class for all statemine obj.
     """
-
-    STATE_TABLE = {
-        "STARTING": state_entry((Running,), Starting),
-        "FAILING": state_entry((Passing,), Failing),
-        "RUNNING": state_entry((Passing, Failing), Running),
-        "PASSING": state_entry((Running,), Passing),
-    }
+    STATE_ENTRY = collections.namedtuple("state", ["output_states", "state_class"]) 
+    # STATE_TABLE = {
+    #     "STARTING": state_entry((Running,), Starting),
+    #     "FAILING": state_entry((Passing,), Failing),
+    #     "RUNNING": state_entry((Passing, Failing), Running),
+    #     "PASSING": state_entry((Running,), Passing),
+    # }
 
     def __init__(self):
         self.setup_init_state()

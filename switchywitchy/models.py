@@ -1,4 +1,4 @@
-#-*- coding: utf-8 -*-
+#-*- coding: utf-8 -* # noqa: E265
 """Traps capture varying events within the system"""
 __author__ = "Maxwell J. Resnick"
 __docformat__ = "reStructuredText"
@@ -22,9 +22,10 @@ class Trap(StateMachineMixin):
     An alarm or trigger, to be tripped by a process.
     Property handling is as follows:
 
-        - Properties are assigned by default values, but are also overridden based on the configuartion of the application being watched.
-        - The underlying process properties are utilized are set by prefixing the property key with `process_`
-        - Properties for the trap are set by prefixing the keys in configuration with `watch_`
+        - Properties are assigned by default values, but are also overridden based on the configuartion of the application being watched. # noqa: E501
+        - The underlying process properties are utilized are set by prefixing the property key with `process_` # noqa: E501
+        - Properties for the trap are set by prefixing the keys in configuration with `watch_` # noqa: E501
+
     """
     PROPERTIES = {
         "watch": {
@@ -35,9 +36,9 @@ class Trap(StateMachineMixin):
             "upper_control":  "10"}
     }
 
-    def __init__(self, properties, app_queue):
+    def __init__(self, properties, app_queue, state=None):
         # sets default attributes
-        self.state = None
+        self.state = state
         self.process = None
         for key, value in self.PROPERTIES["watch"].items():
             setattr(self, key, value)
@@ -46,9 +47,7 @@ class Trap(StateMachineMixin):
         self.cpu_stats = collections.OrderedDict()
         self.queue = curio.Queue()
         self.app_queue = app_queue
-        import ipdb
-        ipdb.set_trace()
-        super().__init__()
+        self.setup_init_state()
 
     def handle_properties(self, properties):
         """
@@ -149,7 +148,7 @@ class Proc(psutil.Process):
         but could get ugly with various systems. e.g. chrome,
         chrome-sandbox
 
-        :param current_proc :class:`psutil.Process`: Process instance Process instance
+        :param current_proc :class:`psutil.Process`: Process instance Process instance # noqa: E501
         :return Proc.id: Process Id
         :rtype int:
         """
@@ -171,13 +170,14 @@ class Proc(psutil.Process):
         match, the current proc.
         access each object's attr, via a 'string'
 
-        :param :class:`psutil.Process` proc: the actual process, `psutil.Process`
+        :param :class:`psutil.Process` proc: the actual process, `psutil.Process` # noqa: E501
         :param dict properties
         :return: boolean if all the property fields match the properties
         :rtype: bool
         """
-        property_fields_match = [properties.get(field) == getattr(proc, field)()
-                                 for field in properties.keys()]
+        property_fields_match = [properties.get(field) == getattr(
+            proc, field)()
+            for field in properties.keys()]
         return all(property_fields_match)
 
     @classmethod
@@ -205,6 +205,8 @@ class Proc(psutil.Process):
 class Message(object):
     """
     generates message obj.
+    
+    the intention.
 
     :param dict data: data for message.
     """

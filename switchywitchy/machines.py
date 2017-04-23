@@ -98,9 +98,6 @@ class StateMachineMixin(object):
         "PASSING": STATE_ENTRY((Running,), Passing),
     }
 
-    def __init__(self):
-        self.setup_init_state()
-
     def __getattr__(self, name):
         """
         automatically forwards to the state class.
@@ -115,10 +112,10 @@ class StateMachineMixin(object):
         """
         sets the initial state.
         """
-        start_STATE_ENTRY = self.STATE_TABLE["STARTING"]
-        start = start_STATE_ENTRY.state_class(
-            start_STATE_ENTRY.output_states)
-        self.state = start()
+        start_state_entry = self.STATE_TABLE["STARTING"]
+        start = start_state_entry.state_class(
+            start_state_entry.output_states)
+        self.state = start
 
     async def transition(self):
         """

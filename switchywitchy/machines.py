@@ -28,10 +28,6 @@ class BaseState(object):
     def __init__(self, state_table=None):
         self.sate_table = state_table
 
-    def transtions(self):
-        """transtions for class"""
-        pass
-
     @classmethod
     def next(cls, results=None):
         """
@@ -87,7 +83,7 @@ class Starting(BaseState):
 
 class StateMachineMixin(object):
     """
-    base class for all statemine obj.
+    base class for all statemachine objects.
     """
     STATE_ENTRY = collections.namedtuple(
         "state", ["output_states", "state_class"])

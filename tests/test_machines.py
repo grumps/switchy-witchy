@@ -2,7 +2,7 @@
 
 """
 Machines are finite state machines and the various states that a machince can
-achieve.
+a chieve.
 
 The transitions defined by a "transition table" which is dictionary with a
 namedtuple as the value
@@ -19,6 +19,8 @@ __docformat__ = "reStructuredText"
 
 import unittest
 import unittest.mock as mock
+
+import curio
 
 from switchywitchy import machines
 
@@ -44,3 +46,15 @@ class TestStateMachineMixin(unittest.TestCase):
         """state attribute is set to starting type"""
         expected_state = machines.StateMachineMixin.STATE_TABLE["STARTING"]
         self.assertIsInstance(self.state_obj.state, expected_state)
+    
+    def test_consumer_calls_next(self):
+        """statemachine consumer should call next transition"""
+        self.state_obj.next = mock.Mock(return_value=None)
+        async def main():
+            rs = await curio.spawn(self.state_obj.transition())
+            try:
+                await curio.timeout_after(1, rs):
+            except TimeOutError as e:
+                await rs.cancel()
+        curio.run(main()) 
+        self.state_obj.next.assert_called_with(none)

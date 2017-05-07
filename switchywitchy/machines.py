@@ -121,7 +121,7 @@ class StateMachineMixin(object):
         while True:
             sender, time_stamp, results = await self.queue.get()
             # result_state = results[time_stamp]
-            self.state = self.next(results, )
+            self.state = self.next(results=results)
             if self.state:
                 await self.action()
                 print('Consumer got', )

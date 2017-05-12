@@ -6,7 +6,6 @@ __version__ = '0.1.0'
 
 import logging
 
-from .switchywitchy import SwitchyWitchy
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 logging.basicConfig(filename="debug.log",
                     level=logging.DEBUG,

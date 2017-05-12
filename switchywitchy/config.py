@@ -3,10 +3,11 @@ import os
 
 package_path = os.path.dirname(__file__)
 
+
 def dump_config(config):
-    for section_name in parser:
+    for section_name in config:
         print('Section:', section_name)
-        section = parser[section_name]
+        section = config[section_name]
         print('  Options:', list(section.keys()))
         for name in section:
             print('  {} = {}'.format(name, section[name]))

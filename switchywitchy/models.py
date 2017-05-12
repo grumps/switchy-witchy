@@ -117,6 +117,7 @@ class Trap(StateMachineMixin):
         """
         memory_task = await curio.spawn(self.check_memory())
         cpu_task = await curio.spawn(self.check_cpu())
+        return memory_task, cpu_task
 
     def __repr__(self):
         try:
@@ -205,7 +206,6 @@ class Proc(psutil.Process):
 class Message(object):
     """
     generates message obj.
-    
     the intention.
 
     :param dict data: data for message.

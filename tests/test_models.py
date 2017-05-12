@@ -7,7 +7,6 @@ import arrow
 import curio
 
 from switchywitchy.models import Proc, Trap, BaseMessage
-from switchywitchy import SwitchyWitchy
 
 import logging
 
@@ -87,7 +86,7 @@ class TrapTestCase(unittest.TestCase):
         self.assertEqual(self.trap.max_memory, "60")
 
     def test_handle_properties_returns_proc_props(self):
-        """when given a key with a prefix of `process` be in a prop on `Trap`"""
+        """given a key with a prefix of `process` be in a prop on `Trap`"""
         self.assertDictEqual(self.trap.properties, {"name": "test_python"})
         self.assertEqual(self.trap.max_cpu_usage, "55")
 
@@ -104,10 +103,11 @@ class TrapTestCase(unittest.TestCase):
         """check cpu should always produce a message to queue"""
         self.trap.process = mock_proc
         mock_proc.cpu_percent = mock.MagicMock(return_value="56")
+
         async def main():
             await curio.spawn(self.consumer(self.trap.queue,
                                             self.results))
-            rs1 = await curio.spawn(self.trap.check_cpu())
+            await curio.spawn(self.trap.check_cpu())
             logger.debug("rs1 run.")
             await curio.sleep(1)
             mock_proc.cpu_percent = mock.MagicMock(return_value="54")
@@ -129,14 +129,15 @@ class TrapTestCase(unittest.TestCase):
     def test_check_memory_produces_statuses(self, mock_proc):
         """check memory should always produce a message to queue"""
         self.trap.process = mock_proc
+
         async def main():
             await curio.spawn(self.consumer(self.trap.queue,
                                             self.results))
             mock_proc.memory_percent = mock.MagicMock(return_value="62")
-            rs1 = await curio.spawn(self.trap.check_memory())
+            await curio.spawn(self.trap.check_memory())
             await curio.sleep(1)
             mock_proc.memory_percent = mock.MagicMock(return_value="56")
-            rs2 = await curio.spawn(self.trap.check_memory())
+            await curio.spawn(self.trap.check_memory())
             await curio.spawn(self.trap.queue.put(None))
         curio.run(main())
         # the data attr is reference

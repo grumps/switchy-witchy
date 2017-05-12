@@ -49,7 +49,7 @@ lint:
 	pip install -r requirements/tests.txt 
 	flake8 switchywitchy tests
 
-test:
+test: lint
 	python setup.py test
 
 test-all:

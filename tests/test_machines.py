@@ -30,15 +30,17 @@ class TestStateMachineMixin(unittest.TestCase):
         """state attribute is set to starting type"""
         expected_state = machines.StateMachineMixin.STATE_TABLE["STARTING"]
         self.assertIsInstance(self.state_obj.state, expected_state)
-    @unittest.skip("wip")
+
     def test_consumer_calls_next(self):
         """statemachine consumer should call next transition"""
         self.state_obj.next = mock.Mock(return_value=None)
-        # TODO this needs to be tuple like obj
         test_message = mock.MagicMock(models.Message, autospec=True)
+
         async def main():
             try:
-                await curio.spawn(self.state_obj.queue.put(test_message)) 
+                await curio.spawn(self.state_obj.queue.put(
+                    (1, 2, test_message)
+                ))
                 await curio.timeout_after(.5, self.state_obj.transition())
             except curio.TaskTimeout as e:
                 pass
